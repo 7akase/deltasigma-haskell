@@ -10,11 +10,12 @@ import DeltaSigma.Type
 import DeltaSigma.GeneralUtility
 
 calculateSNR :: Bin -> Bin -> [Double] -> Double
-calculateSNR f nsig hwfft = dbv (s / n)
+calculateSNR f nsig hwfft = dbp (s / n)
   where
     norm xs = sum $ fmap (** 2) xs 
-    s = norm . take (2 * nsig + 1) $ drop (f - nsig)  hwfft
-    n = norm hwfft - s 
+    s = norm $ fmap (hwfft !!) [f-nsig .. f+nsig]
+    n = norm $ fmap (hwfft !!) ([0 .. f-nsig-1] ++ [f+nsig+1 .. length hwfft - 1])
+    
 
 partitionABCD = undefined
 infnorm = undefined

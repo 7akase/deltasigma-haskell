@@ -21,12 +21,10 @@ lpf1 fp xdot t [x, y] = [sx, sy]
     sy = (x - y) / t1 -- Y/X = 1 / (1 + s.t1) <=> Y + t1.sY = X
     t1 = 1 / 2 / pi / fp
 
--- p2p $ (!! 1) <$> solve (lpf1 0.1) 0 [0,0] <$> (* 1e-2) <$> [1..10]
-
-lpf2 :: (Freq, Freq) -> Time -> [Double] -> [Double]
-lpf2 (fp1, fp2) t [x, y, sy] = [sx, sy, ssy]
+lpf2 :: (Freq, Freq) -> (Time -> Double) -> Time -> [Double] -> [Double]
+lpf2 (fp1, fp2) xdot t [x, y, sy] = [sx, sy, ssy]
   where
-    sx  = 2 * pi * cos(2*pi*t)
+    sx  = xdot t 
     ssy = x - y - (t1 + t2) * sy
     t1  = 1 / 2 / pi / fp1
     t2  = 1 / 2 / pi / fp2

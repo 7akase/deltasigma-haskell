@@ -11,10 +11,13 @@ solve xdot t0 x0 t1 = last . toLists $ odeSolve xdot x0 ts
   where
     ts = linspace 2 (t0, t1)
 
-lpf1 :: Freq -> Time -> [Double] -> [Double]
-lpf1 fp t [x, y] = [sx, sy]
+diffStepFunc t = 0.0
+diffSinFunc fsig t = 2*pi*cos(2*pi*fsig*t)
+
+lpf1 :: Freq -> (Time -> Double) -> Time -> [Double] -> [Double]
+lpf1 fp xdot t [x, y] = [sx, sy]
   where
-    sx = 2*pi * cos (2*pi*t)
+    sx = xdot t 
     sy = (x - y) / t1 -- Y/X = 1 / (1 + s.t1) <=> Y + t1.sY = X
     t1 = 1 / 2 / pi / fp
 

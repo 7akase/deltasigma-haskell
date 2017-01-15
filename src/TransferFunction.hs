@@ -1,7 +1,8 @@
 module TransferFunction where
 
 import Numeric.GSL.ODE
-import Numeric.LinearAlgebra (linspace, toLists)
+import Numeric.LinearAlgebra
+-- import Numeric.LinearAlgebra (linspace, toLists)
 
 type Time = Double
 type Freq = Double
@@ -11,7 +12,9 @@ solve xdot t0 x0 t1 = last . toLists $ odeSolve xdot x0 ts
   where
     ts = linspace 2 (t0, t1)
 
-diffStepFunc t = 0.0
+diffStepFunc t = if 0.0 <= t && t <= trf then 1 / trf else 0
+  where
+    trf = 0.01
 diffSinFunc fsig t = 2*pi*cos(2*pi*fsig*t)
 
 lpf1 :: Freq -> (Time -> Double) -> Time -> [Double] -> [Double]
@@ -32,18 +35,24 @@ lpf2 (fp1, fp2) xdot t [x, y, sy] = [sx, sy, ssy]
     -- <=> Y + (t1+t2).sY + t1.t2.ssY = X
     -- <=> t1.t2.ssY = X - Y - (t1+t2).sY
 
-hpf1 :: Freq -> Time -> [Double] -> [Double]
-hpf1 = undefined  -- true 1-zero tranfer function can't be solved
-
-laglead :: (Freq, Freq) -> Time -> [Double] -> [Double]
-laglead (fp, fz) t [x, y] = [sx, sy] where
-    sx  = 2 * pi * cos (2 * pi * t)
-    sy  = (-y + x + tz * sx) / tp
+hpf1 :: Freq -> (Time -> Double) -> Time -> [Double] -> [Double]
+-- true 1-zero tranfer function can't be solved
+hpf1 fz xdot t [x, y] = [sx, sy]
+  where
+    sx  = xdot t 
+    sy  = (tz*sx - y) / tz
+    tz  = 1 / 2 / pi / fz
+ 
+laglead :: (Freq, Freq) -> (Time -> Double) -> Time -> [Double] -> [Double]
+laglead (fp, fz) xdot t [x, y] = [sx, sy]
+  where
+    sx  = xdot t 
+    sy  = (x + tz*sx - y) / tp
     tp  = 1 / 2 / pi / fp
     tz  = 1 / 2 / pi / fz
     -- H(x) = (1 + tz.s) / (1 + tp.s)
     -- <=> Y + tp.sY = X + tz.sX
-    -- <=> sY = (-Y + X + tz.sx) / tp
+    -- <=> sY = (X + tz.sX - Y) / tp
 
 p2p :: [Double] -> Double
 p2p xs = maximum xs - minimum xs

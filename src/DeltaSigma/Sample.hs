@@ -18,12 +18,12 @@ getV :: [[Double]] -> [Double]
 getV = fmap (!! 2)
 
 waveForSnr :: Int -> Double -> Modulator -> [Double] -> [Double] 
-waveForSnr osr ts m i = take n_fft . getV $ iterate (m df ts) i
+waveForSnr osr dt m i = take n_fft . getV $ iterate (m df dt) i
   where
-    df t    = 0.7 * sin (w_sig * t)
+    df t    = 0.7 * w_sig * cos (w_sig * t)
     bin_sig = 23 
     n_fft   = nextpow2 (bin_sig * osr)
-    t_fft   = fromIntegral n_fft * ts
+    t_fft   = fromIntegral n_fft * dt
     t_sig   = t_fft / fromIntegral bin_sig
     w_sig   = 2 * pi / t_sig
 
@@ -40,7 +40,8 @@ pdc f dt [t_prev, zu, zv, zy, zfb] = [t, u, v, y, fb]
   where
     t  = t_prev + dt
     u  = f t
-    [_, y] = solve (laglead (0.01, 0.5)) t_prev [zu-zfb, zy] t
+    [_, y] = solve fwdfilter t_prev [zu-zfb, zy] t
+    fwdfilter = laglead (1/100, 1/2) (\t -> diffStepFunc (t-t_prev))
     v  = quantize zy
     fb = zfb + 2*v - zv
 
@@ -48,11 +49,11 @@ main :: IO ()
 main = do
   let osr = 256
       ts = 1
-      vs = waveForSnr osr ts dsm1 [0, -1, 0, 0]
+      vs = waveForSnr osr ts dsm1 [0, 0, -1, 0]  -- [t, u, v, y]
       vs_psd = psd $ window rect vs
   -- putStrLn . show . calculateSNR 23 3 $ take osr vs_psd
   -- plotList [] $ vs 
   -- plotPsd $ fmap dbv vs_psd
   -- plotList [] $ waveForSnr osr ts pdc
-  plotPsd . fmap dbv . psd . window rect $ waveForSnr osr ts pdc [0, -1, 0, 0, 0]
+  plotPsd . fmap dbv . psd . window rect $ waveForSnr osr ts pdc [0, 0, -1, 0, 0]
   putStrLn "fin."

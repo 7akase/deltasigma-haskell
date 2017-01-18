@@ -3,6 +3,8 @@ extra-package-dbs: []
 packages:
 - '.'
 extra-deps:
+- machines-directory-0.2.0.9
+- machines-io-0.2.0.13
 - data-accessor-transformers-0.2.1.7
 - gnuplot-0.5.4.1
 - pure-fft-0.2.0
